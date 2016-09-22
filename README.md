@@ -1,0 +1,2 @@
+# YOUDaoTranslation
+TestYOUDaoTranslationAPI_ForAndroid
