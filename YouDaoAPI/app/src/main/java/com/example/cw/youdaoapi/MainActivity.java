@@ -86,9 +86,19 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 HttpURLConnection connection = null;
                 transContent=editText.getText().toString();
+
+                //在ui线程中提示输入为空
+                if(transContent.equals("")||transContent==null)
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,"输入为空",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                });
+
                 try {
                     URL url = new URL(apiUrl+ URLEncoder.encode(transContent,"utf8"));
-                    //URL url = new URL("http://www.baidu.com");
                     connection = (HttpURLConnection)url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.connect();
@@ -96,9 +106,6 @@ public class MainActivity extends AppCompatActivity {
                     InputStream in = connection.getInputStream();
 
                     //对获取的流进行读取
-//                    BufferedReader replyReader = new BufferedReader(
-//                            new InputStreamReader(connection.getInputStream(), "utf-8"));//约定输入流的编码
-                   // reply = replyReader.readLine();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
                     StringBuilder response = new StringBuilder();
                     String line=null;
@@ -106,61 +113,39 @@ public class MainActivity extends AppCompatActivity {
                         response.append(line);
 
                     }
-                    line=response.toString();
-
-                    //response.substring(response.indexOf("{"),response.lastIndexOf("}")+1);
-                    //JSONTokener jsonTokener = new JSONTokener(line);
-                   // JSONObject transJSON=(JSONObject)jsonTokener.nextValue();
-                   // JSONObject transJSON=new JSONObject(response.toString());
-                   // Log.d("Test",response.toString());
                     JSONObject transJSON = new JSONObject(response.toString());
-
 
                         String errorCode = transJSON.getString("errorCode");
                         if(errorCode.equals("0")){
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(getApplicationContext(),"正确进入",Toast.LENGTH_SHORT).show();
-                                }
-                            });
                             //当返回的是有效值
                             String query = transJSON.getString("query");
                             JSONArray translation = transJSON.getJSONArray("translation");
                             JSONObject basic = transJSON.getJSONObject("basic");
                             JSONArray web =transJSON.getJSONArray("web");
 
-                            String phonetic = basic.getString("phonetic");
-//                            String ukphonetic = basic.getString("uk-phonetic");
-//                            String usphonetic = basic.getString("us-phonetic");
                             JSONArray explains = basic.getJSONArray("explains");
                             tvMsg="原文："+query;
                             tvMsg+="\n翻译结果：";
-//                            tvMsg+="\n发音："+phonetic;
-////                                    "\n英式发音"+ukphonetic+
-////                                    "\n美式发音"+usphonetic;
                             String explainStr="\n\n释意：";
                             for(int j = 1,s=0;s<explains.length();s++,j++){
                                 explainStr+="\n"+j+". "+explains.getString(s);
                             }
                             tvMsg+=explainStr;
                         }   //下面是各种错误的返回结果
-                        else if(errorCode.equals(20)){
+                        else if(errorCode.equals("20")){
                             Toast.makeText(MainActivity.this,"要翻译的文本过长",Toast.LENGTH_SHORT).show();
-                        }else if(errorCode.equals(30)){
+                        }else if(errorCode.equals("30")){
                             Toast.makeText(MainActivity.this,"无法进行有效的翻译",Toast.LENGTH_SHORT).show();
-                        }else if(errorCode.equals(40)){
+                        }else if(errorCode.equals("40")){
                             Toast.makeText(MainActivity.this,"不支持的语言类型",Toast.LENGTH_SHORT).show();
-                        }else if(errorCode.equals(50)){
+                        }else if(errorCode.equals("50")){
                             Toast.makeText(MainActivity.this,"无效的key",Toast.LENGTH_SHORT).show();
-                        }else if(errorCode.equals(60)){
+                        }else if(errorCode.equals("60")){
                             Toast.makeText(MainActivity.this,"无词典结果",Toast.LENGTH_SHORT).show();
                         }
 
-
                         Message message = new Message();
                         message.what = 0;
-
                         message.obj=tvMsg.toString();
                         handler.sendMessage(message);
 
